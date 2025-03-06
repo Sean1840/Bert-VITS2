@@ -14,6 +14,8 @@ from config import config
 import argparse
 import datetime
 
+os.environ["USE_LIBUV"] = "0"
+
 logging.getLogger("numba").setLevel(logging.WARNING)
 import commons
 import utils

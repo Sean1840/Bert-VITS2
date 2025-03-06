@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import numpy as np
 from huggingface_hub import hf_hub_download
+from matplotlib.figure import Figure
 from scipy.io.wavfile import read
 import torch
 import re
@@ -167,6 +168,25 @@ def latest_checkpoint_path(dir_path, regex="G_*.pth"):
     return x
 
 
+def figure_canvas_draw(fig: Figure):
+    import numpy as np
+    # fig.canvas.draw()
+    # data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep="")
+    # data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    # 渲染画布
+    fig.canvas.draw()
+    # 获取画布尺寸
+    width, height = fig.canvas.get_width_height()
+    # 使用 tostring_argb 获取 ARGB 数据
+    argb_data = np.fromstring(fig.canvas.tostring_argb(), dtype=np.uint8, sep="")
+    argb_data = argb_data.reshape((height, width, 4))
+    # 仅保留 RGB 通道
+    data = argb_data[..., 1:]
+    data = data.reshape((height, width, 3))
+    return data
+
+
 def plot_spectrogram_to_numpy(spectrogram):
     global MATPLOTLIB_FLAG
     if not MATPLOTLIB_FLAG:
@@ -177,7 +197,6 @@ def plot_spectrogram_to_numpy(spectrogram):
         mpl_logger = logging.getLogger("matplotlib")
         mpl_logger.setLevel(logging.WARNING)
     import matplotlib.pylab as plt
-    import numpy as np
 
     fig, ax = plt.subplots(figsize=(10, 2))
     im = ax.imshow(spectrogram, aspect="auto", origin="lower", interpolation="none")
@@ -186,9 +205,7 @@ def plot_spectrogram_to_numpy(spectrogram):
     plt.ylabel("Channels")
     plt.tight_layout()
 
-    fig.canvas.draw()
-    data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep="")
-    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    data = figure_canvas_draw(fig)
     plt.close()
     return data
 
@@ -203,7 +220,7 @@ def plot_alignment_to_numpy(alignment, info=None):
         mpl_logger = logging.getLogger("matplotlib")
         mpl_logger.setLevel(logging.WARNING)
     import matplotlib.pylab as plt
-    import numpy as np
+
 
     fig, ax = plt.subplots(figsize=(6, 4))
     im = ax.imshow(
@@ -217,9 +234,7 @@ def plot_alignment_to_numpy(alignment, info=None):
     plt.ylabel("Encoder timestep")
     plt.tight_layout()
 
-    fig.canvas.draw()
-    data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep="")
-    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    data = figure_canvas_draw(fig)
     plt.close()
     return data
 
